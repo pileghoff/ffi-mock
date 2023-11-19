@@ -1,54 +1,61 @@
-use core::ffi::c_int;
-pub mod ffi_mock;
+pub use ffi_mock_macro::mock;
 
-pub use ffi_mock_macro;
+use core::panic;
+use std::{collections::VecDeque, sync::Mutex};
 
-#[macro_use]
-extern crate lazy_static;
-
-extern "C" {
-    fn abs_test(args: c_int) -> c_int;
+pub struct FunctionMockInner<Tin: Sized + 'static + Clone, Tout: Sized + 'static + Clone> {
+    pub call_history: Vec<Tin>,
+    pub return_val: VecDeque<Tout>,
+    pub default_ret_val: Option<Tout>,
 }
 
-#[cfg(test)]
-pub mod tests {
+impl<Tin, Tout> FunctionMockInner<Tin, Tout>
+where
+    Tin: Sized + 'static + Clone,
+    Tout: Sized + 'static + Clone,
+{
+    pub fn new() -> Self {
+        FunctionMockInner {
+            call_history: Vec::new(),
+            return_val: VecDeque::new(),
+            default_ret_val: None,
+        }
+    }
 
-    use super::*;
-    use ffi_mock;
+    pub fn get_next_return(&mut self) -> Tout {
+        match self.return_val.pop_front() {
+            Some(v) => v,
+            None => match &self.default_ret_val {
+                Some(v) => v.clone(),
+                None => panic!("Unexpected call"),
+            },
+        }
+    }
+}
 
-    #[test]
-    pub fn it_works() {
-        // let mock = {
-        //     lazy_static! {
+pub struct FunctionMock<'a, Tin: Sized + 'static + Clone, Tout: Sized + 'static + Clone> {
+    pub inner: &'a Mutex<FunctionMockInner<Tin, Tout>>,
+}
 
-        //             let a = vec![10];
-        //         static ref static_mock: Mutex<FunctionMockInner<c_int, c_int, Iter<'static, c_int>>> =
-        //             Mutex::new(FunctionMockInner::new(a.iter()));
-        //     }
+impl<'a, Tin, Tout> FunctionMock<'a, Tin, Tout>
+where
+    Tin: Sized + 'static + Clone,
+    Tout: Sized + 'static + Clone,
+{
+    pub fn new(inner: &'a Mutex<FunctionMockInner<Tin, Tout>>) -> Self {
+        FunctionMock { inner }
+    }
 
-        //     #[no_mangle]
-        //     pub extern "C" fn abs_test(args: c_int) -> c_int {
-        //         let mut a = static_mock.lock().unwrap();
-        //         a.call_history.push(args);
-        //         10
-        //     }
-        //     FunctionMock::new(&static_mock)
-        // };
-        let mock = ffi_mock_macro::mock!(
-            fn abs_test(args:c_int) -> c_int
-        );
-        mock.set_default_return(11);
-        mock.add_return(10);
+    pub fn calls(self) -> Vec<Tin> {
+        self.inner.lock().unwrap().call_history.clone()
+    }
 
-        let b = unsafe { abs_test(10) };
-        assert_eq!(b, 10);
+    pub fn add_return(&self, val: Tout) {
+        self.inner.lock().unwrap().return_val.push_back(val);
+    }
 
-        let b = unsafe { abs_test(10) };
-        assert_eq!(b, 11);
-
-        let b = unsafe { abs_test(10) };
-        assert_eq!(b, 11);
-
-        assert_eq!(mock.calls()[0], 10);
+    pub fn set_default_return(&self, val: Tout) {
+        let mut inner = self.inner.lock().unwrap();
+        inner.default_ret_val = Some(val);
     }
 }
