@@ -13,10 +13,8 @@ extern "C" {
 #[cfg(test)]
 pub mod tests {
 
-    use std::{slice::Iter, sync::Mutex};
-
     use super::*;
-    use ffi_mock::*;
+    use ffi_mock;
 
     #[test]
     pub fn it_works() {
@@ -36,7 +34,7 @@ pub mod tests {
         //     }
         //     FunctionMock::new(&static_mock)
         // };
-        let mock: FunctionMock<c_int, c_int> = ffi_mock_macro::mock!(
+        let mock = ffi_mock_macro::mock!(
             fn abs_test(args:c_int) -> c_int
         );
         mock.set_default_return(11);

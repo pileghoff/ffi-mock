@@ -43,7 +43,10 @@ fn get_types(in_sig: &Punctuated<FnArg, Comma>) -> Punctuated<Type, Comma> {
 #[proc_macro]
 pub fn mock(input: TokenStream) -> TokenStream {
     let func = parse_macro_input!(input as Signature);
-    let static_mock_name = format_ident!("STATIC_MOCK_{}", func.ident);
+    let static_mock_name = format_ident!(
+        "STATIC_MOCK_{}",
+        func.ident.to_string().to_ascii_uppercase()
+    );
     let extern_name = func.ident;
     let in_types = get_types(&func.inputs);
     let in_names = get_names(&func.inputs);
@@ -56,17 +59,17 @@ pub fn mock(input: TokenStream) -> TokenStream {
     quote!(
         {
             lazy_static! {
-                static ref #static_mock_name: Mutex<FunctionMockInner<#in_types, #out_sig>> =
-                    Mutex::new(FunctionMockInner::new());
+                static ref #static_mock_name: std::sync::Mutex<ffi_mock::FunctionMockInner<#in_types, #out_sig>> =
+                    std::sync::Mutex::new(ffi_mock::FunctionMockInner::new());
             }
 
             #[no_mangle]
-            pub extern "C" fn #extern_name(#in_sig) -> #out_sig {
+            extern "C" fn #extern_name(#in_sig) -> #out_sig {
                 let mut a = #static_mock_name.lock().unwrap();
                 a.call_history.push(#in_names);
                 a.get_next_return()
             }
-            FunctionMock::new(&#static_mock_name)
+            ffi_mock::FunctionMock::new(&#static_mock_name)
         }
     )
     .into()
