@@ -1,0 +1,11 @@
+workspace = { members = ["ffi-mock-macro"] }
+[package]
+name = "ffi-mock"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+lazy_static = "1.4.0"
+ffi-mock-macro = { path = "ffi-mock-macro" }
