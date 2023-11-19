@@ -1,6 +1,7 @@
 pub use ffi_mock_macro::mock;
 
 use core::panic;
+pub use lazy_static::lazy_static;
 use std::{collections::VecDeque, sync::Mutex};
 
 pub struct FunctionMockInner<Tin: Sized + 'static + Clone, Tout: Sized + 'static + Clone> {
@@ -58,4 +59,10 @@ where
         let mut inner = self.inner.lock().unwrap();
         inner.default_ret_val = Some(val);
     }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn it_works() {}
 }

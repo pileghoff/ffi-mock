@@ -58,7 +58,7 @@ pub fn mock(input: TokenStream) -> TokenStream {
 
     quote!(
         {
-            lazy_static! {
+            ffi_mock::lazy_static! {
                 static ref #static_mock_name: std::sync::Mutex<ffi_mock::FunctionMockInner<#in_types, #out_sig>> =
                     std::sync::Mutex::new(ffi_mock::FunctionMockInner::new());
             }
