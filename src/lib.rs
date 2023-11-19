@@ -4,6 +4,12 @@ use core::panic;
 pub use lazy_static::lazy_static;
 use std::{collections::VecDeque, sync::Mutex};
 
+unsafe impl<Tin, Tout> Send for FunctionMockInner<Tin, Tout>
+where
+    Tin: Sized + 'static + Clone,
+    Tout: Sized + 'static + Clone,
+{
+}
 pub struct FunctionMockInner<Tin: Sized + 'static + Clone, Tout: Sized + 'static + Clone> {
     pub call_history: Vec<Tin>,
     pub return_val: VecDeque<Tout>,

@@ -58,8 +58,6 @@ pub fn mock(input: TokenStream) -> TokenStream {
 
     quote!(
         {
-            unsafe impl Send for ffi_mock::FunctionMockInner<(#in_types), #out_sig> {}
-            unsafe impl Sync for ffi_mock::FunctionMockInner<(#in_types), #out_sig> {}
 
             ffi_mock::lazy_static! {
                 static ref #static_mock_name: std::sync::Mutex<ffi_mock::FunctionMockInner<(#in_types), #out_sig>> =
