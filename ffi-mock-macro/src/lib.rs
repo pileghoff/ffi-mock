@@ -58,16 +58,19 @@ pub fn mock(input: TokenStream) -> TokenStream {
 
     quote!(
         {
+            unsafe impl Send for ffi_mock::FunctionMockInner<(#in_types), #out_sig> {}
+            unsafe impl Sync for ffi_mock::FunctionMockInner<(#in_types), #out_sig> {}
+
             ffi_mock::lazy_static! {
-                static ref #static_mock_name: std::sync::Mutex<ffi_mock::FunctionMockInner<#in_types, #out_sig>> =
+                static ref #static_mock_name: std::sync::Mutex<ffi_mock::FunctionMockInner<(#in_types), #out_sig>> =
                     std::sync::Mutex::new(ffi_mock::FunctionMockInner::new());
             }
 
             #[no_mangle]
             extern "C" fn #extern_name(#in_sig) -> #out_sig {
-                let mut a = #static_mock_name.lock().unwrap();
-                a.call_history.push(#in_names);
-                a.get_next_return()
+                let mut ffi_mock_mutex = #static_mock_name.lock().unwrap();
+                ffi_mock_mutex.call_history.push( (#in_names) );
+                ffi_mock_mutex.get_next_return()
             }
             ffi_mock::FunctionMock::new(&#static_mock_name)
         }

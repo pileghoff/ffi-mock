@@ -63,6 +63,50 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::ptr::null;
+
+    use super::*;
+    use crate as ffi_mock;
+
+    #[derive(Clone)]
+    struct TestStruct {
+        a: u32,
+        b: *const std::ffi::c_void,
+        c: usize,
+    }
+    extern "C" {
+        fn test_fun(a: u32, b: *const std::ffi::c_void, c: TestStruct) -> TestStruct;
+    }
+
+    fn test_indirection() -> u32 {
+        let res = unsafe {
+            test_fun(
+                10,
+                null(),
+                TestStruct {
+                    a: 0,
+                    b: null(),
+                    c: 0,
+                },
+            )
+        };
+
+        res.a
+    }
+
     #[test]
-    fn it_works() {}
+    fn basic_setup() {
+        let mock = mock!(
+            fn test_fun(a: u32, b: *const std::ffi::c_void, c: TestStruct) -> TestStruct
+        );
+
+        mock.add_return(TestStruct {
+            a: 0xbeef,
+            b: null(),
+            c: 0,
+        });
+
+        let res = test_indirection();
+        assert_eq!(res, 0xbeef);
+    }
 }
