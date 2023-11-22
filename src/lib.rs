@@ -41,7 +41,7 @@ where
 }
 
 pub struct FunctionMock<'a, Tin: Sized + 'static + Clone, Tout: Sized + 'static + Clone> {
-    pub inner: &'a Mutex<FunctionMockInner<Tin, Tout>>,
+    inner: &'a Mutex<FunctionMockInner<Tin, Tout>>,
 }
 
 impl<'a, Tin, Tout> FunctionMock<'a, Tin, Tout>
